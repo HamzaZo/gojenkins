@@ -57,7 +57,7 @@ var (
 )
 
 func init() {
-	temp = template.Must(template.ParseFiles("helpers/manage_clouds.tpl"))
+	temp = template.Must(template.ParseFiles("manage_clouds.tpl"))
 }
 
 func (k *KubernetesCloud) CloudConfigure(ctx context.Context) (*KubernetesCloud, error) {
