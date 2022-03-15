@@ -158,11 +158,11 @@ func (r *Requester) Do(ctx context.Context, ar *APIRequest, responseStruct inter
 	if err != nil {
 		return nil, err
 	}
-	querystring := make(url.Values)
 
 	for _, o := range options {
 		switch v := o.(type) {
 		case map[string]string:
+			querystring := make(url.Values)
 
 			for key, val := range v {
 				querystring.Set(key, val)
@@ -213,7 +213,7 @@ func (r *Requester) Do(ctx context.Context, ar *APIRequest, responseStruct inter
 		req.Header.Set("Content-Type", writer.FormDataContentType())
 	} else {
 
-		req, err = http.NewRequest(ar.Method, URL.String(), strings.NewReader(querystring.Encode()))
+		req, err = http.NewRequest(ar.Method, URL.String(), ar.Payload)
 		if err != nil {
 			return nil, err
 		}
