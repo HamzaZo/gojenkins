@@ -212,8 +212,8 @@ func (j *Jenkins) CreateJobInFolder(ctx context.Context, config string, jobName 
 	return job, nil
 }
 
-//CreateClouds Create Jenkins Clouds
-func (j *Jenkins) CreateClouds(ctx context.Context, cg CloudConfig) (*KubernetesCloud, error) {
+//CreateCloud Create Jenkins Clouds
+func (j *Jenkins) CreateCloud(ctx context.Context, cg CloudConfig) (*KubernetesCloud, error) {
 	objK8s := &KubernetesCloud{Jenkins: j, Raw: new([]CloudResponse), K8sCloud: cg, Base: "/scriptText"}
 	return objK8s.Create(ctx)
 }
