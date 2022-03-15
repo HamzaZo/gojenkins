@@ -128,8 +128,7 @@ private configure(config) {
     def lstCloudsJson = JsonOutput.toJson(lstClouds)
     return lstCloudsJson
 }
-{{ end }}
-{{ if eq .Operation "read" }}
+{{ else if eq .Operation "read" }}
 private configure(config) {
     def instance = Jenkins.getInstance()
     def clouds = instance.clouds
@@ -177,8 +176,7 @@ private configure(config) {
     def lstCloudsJson = JsonOutput.toJson(lstClouds)
     return lstCloudsJson
 }
-{{ end }}
-{{ if eq .Operation "delete" }}
+{{ else if eq .Operation "delete" }}
 private configure(config) {
     def instance = Jenkins.getInstance()
     def clouds = instance.clouds
@@ -253,6 +251,7 @@ func (k *KubernetesCloud) Get(ctx context.Context) (*KubernetesCloud, error) {
 		return nil, err
 	}
 	if r.StatusCode == 200 {
+		tpl.Reset()
 		return k, nil
 	}
 
@@ -273,6 +272,7 @@ func (k *KubernetesCloud) Create(ctx context.Context) (*KubernetesCloud, error) 
 		return nil, err
 	}
 	if r.StatusCode == 200 {
+		tpl.Reset()
 		return k, nil
 	}
 
