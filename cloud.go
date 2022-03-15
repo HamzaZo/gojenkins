@@ -6,6 +6,7 @@ import (
 	"errors"
 	"html/template"
 	"strconv"
+	"strings"
 )
 
 type KubernetesCloud struct {
@@ -57,7 +58,7 @@ var (
 )
 
 func init() {
-	var clouds = []byte(`
+	var cloudConfig = []byte(`
 import org.csanchez.jenkins.plugins.kubernetes.*
 import org.csanchez.jenkins.plugins.kubernetes.model.*
 import jenkins.model.Jenkins
@@ -79,13 +80,9 @@ def addKubernetesCloud(cloudList, config) {
     cloud.containerCapStr = config.containerCapStr ?: '10'
     cloudList.add(cloud)
 }
-
-
 private configure(config) {
     def instance = Jenkins.getInstance()
     def clouds = instance.clouds
-
-
     config.each { name, details ->
         Iterator iter = clouds.iterator();
         while (iter.hasNext()) {
@@ -96,7 +93,6 @@ private configure(config) {
         }
         addKubernetesCloud(clouds, details)
     }
-
     def lstClouds = []
     clouds.each { elem ->
         def nKubernetesCloudC4 = new KubernetesCloudC4 (
@@ -130,20 +126,17 @@ private configure(config) {
             lstLabels.add(nLabel)
         }
         nKubernetesCloudC4.podLabels = lstLabels
-
         lstClouds.add(nKubernetesCloudC4)
     }
     def lstCloudsJson = JsonOutput.toJson(lstClouds)
     return lstCloudsJson
 }
 {{ end }}
-
 {{ if eq .Operation "read" }}
 private configure(config) {
     def instance = Jenkins.getInstance()
     def clouds = instance.clouds
     def lstClouds = []
-
     config.each { name, details ->
         Iterator iter = clouds.iterator();
         while (iter.hasNext()) {
@@ -180,23 +173,18 @@ private configure(config) {
                            lstLabels.add(nLabel)
                        }
                        nKubernetesCloudC4.podLabels = lstLabels
-
                        lstClouds.add(nKubernetesCloudC4)
             }
         }
     }
-
-
     def lstCloudsJson = JsonOutput.toJson(lstClouds)
     return lstCloudsJson
 }
 {{ end }}
-
 {{ if eq .Operation "delete" }}
 private configure(config) {
     def instance = Jenkins.getInstance()
     def clouds = instance.clouds
-
     config.each { name, details ->
         Iterator iter = clouds.iterator();
         while (iter.hasNext()) {
@@ -205,11 +193,9 @@ private configure(config) {
                iter.remove();
             }
         }
-
     }
 }
 {{ end }}
-
 configure 'k8s-cloud': [
         {{ if or ( eq .Operation "read") (eq .Operation "delete") }}
         cloudName    : '{{ .CloudName }}'
@@ -220,14 +206,11 @@ configure 'k8s-cloud': [
         jenkinsTunnel: '{{ .JenkinsTunnel}}'
         {{ end }}
 ]
-
-
 {{ if or ( eq .Operation "create") (eq .Operation "read") }}
 public class PodLabel {
     String key;
     String value;
 }
-
 public class KubernetesCloudC4 {
     String defaultsProviderTemplate;
     List<PodTemplate> templates;
@@ -256,9 +239,8 @@ public class KubernetesCloudC4 {
     String podRetention;
 }
 {{ end }}
-
 `)
-	temp = template.Must(template.New("cloud").Parse(string(clouds)))
+	temp = template.Must(template.New("cloud").Parse(string(cloudConfig)))
 }
 
 func (k *KubernetesCloud) CloudConfigure(ctx context.Context) (*KubernetesCloud, error) {
@@ -267,7 +249,7 @@ func (k *KubernetesCloud) CloudConfigure(ctx context.Context) (*KubernetesCloud,
 		return nil, err
 	}
 	data := map[string]string{
-		"script": output,
+		"script": strings.TrimSpace(output),
 	}
 	r, err := k.Jenkins.Requester.Post(ctx, k.Base, nil, k.Raw, data)
 
