@@ -53,12 +53,9 @@ type CloudResponse struct {
 }
 
 var (
-	temp *template.Template
-	tpl  bytes.Buffer
-)
-
-func init() {
-	var cloudConfig = []byte(`
+	temp        *template.Template
+	tpl         bytes.Buffer
+	cloudConfig = []byte(`
 import org.csanchez.jenkins.plugins.kubernetes.*
 import org.csanchez.jenkins.plugins.kubernetes.model.*
 import jenkins.model.Jenkins
@@ -240,10 +237,9 @@ public class KubernetesCloudC4 {
 }
 {{ end }}
 `)
-	temp = template.Must(template.New("cloud").Parse(string(cloudConfig)))
-}
+)
 
-func (k *KubernetesCloud) CloudConfigure(ctx context.Context) (*KubernetesCloud, error) {
+func (k *KubernetesCloud) Get(ctx context.Context) (*KubernetesCloud, error) {
 	output, err := k.renderTemplate()
 	if err != nil {
 		return nil, err
@@ -263,7 +259,47 @@ func (k *KubernetesCloud) CloudConfigure(ctx context.Context) (*KubernetesCloud,
 	return nil, errors.New(strconv.Itoa(r.StatusCode))
 }
 
+func (k *KubernetesCloud) Create(ctx context.Context) (*KubernetesCloud, error) {
+	output, err := k.renderTemplate()
+	if err != nil {
+		return nil, err
+	}
+	data := map[string]string{
+		"script": strings.TrimSpace(output),
+	}
+	r, err := k.Jenkins.Requester.Post(ctx, k.Base, nil, k.Raw, data)
+
+	if err != nil {
+		return nil, err
+	}
+	if r.StatusCode == 200 {
+		return k, nil
+	}
+
+	return nil, errors.New(strconv.Itoa(r.StatusCode))
+}
+
+func (k *KubernetesCloud) Delete(ctx context.Context) (bool, error) {
+	output, err := k.renderTemplate()
+	if err != nil {
+		return false, err
+	}
+	data := map[string]string{
+		"script": strings.TrimSpace(output),
+	}
+	resp, err := k.Jenkins.Requester.Post(ctx, k.Base, nil, k.Raw, data)
+	if err != nil {
+		return false, err
+	}
+	if resp.StatusCode != 200 {
+		return false, errors.New(strconv.Itoa(resp.StatusCode))
+	}
+
+	return true, nil
+}
+
 func (k *KubernetesCloud) renderTemplate() (string, error) {
+	temp = template.Must(template.New("cloud").Parse(string(cloudConfig)))
 	err := temp.Execute(&tpl, k.K8sCloud)
 	if err != nil {
 		return "", err

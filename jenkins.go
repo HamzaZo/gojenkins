@@ -212,14 +212,22 @@ func (j *Jenkins) CreateJobInFolder(ctx context.Context, config string, jobName 
 	return job, nil
 }
 
-//ManageClouds Manage Jenkins Clouds
-func (j *Jenkins) ManageClouds(ctx context.Context, cg CloudConfig) (*KubernetesCloud, error) {
+//CreateClouds Create Jenkins Clouds
+func (j *Jenkins) CreateClouds(ctx context.Context, cg CloudConfig) (*KubernetesCloud, error) {
 	objK8s := &KubernetesCloud{Jenkins: j, Raw: new([]CloudResponse), K8sCloud: cg, Base: "/scriptText"}
-	k8s, err := objK8s.CloudConfigure(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return k8s, nil
+	return objK8s.Create(ctx)
+}
+
+//DeleteCloud Delete Jenkins Clouds
+func (j *Jenkins) DeleteCloud(ctx context.Context, cg CloudConfig) (bool, error) {
+	objK8s := &KubernetesCloud{Jenkins: j, Raw: new([]CloudResponse), K8sCloud: cg, Base: "/scriptText"}
+	return objK8s.Delete(ctx)
+}
+
+//GetCloud Get Jenkins Clouds
+func (j *Jenkins) GetCloud(ctx context.Context, cg CloudConfig) (*KubernetesCloud, error) {
+	objK8s := &KubernetesCloud{Jenkins: j, Raw: new([]CloudResponse), K8sCloud: cg, Base: "/scriptText"}
+	return objK8s.Get(ctx)
 }
 
 //CreateJob Create a new job from config File
